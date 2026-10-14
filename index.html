@@ -1,0 +1,387 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>紙張令數試算</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: two-panel workbench — inputs (left) feed a result sheet (right); stacks on phones */
+:root{
+  --bg:#F3F5F6; --surface:#FFFFFF; --ink:#18212B; --muted:#596574; --line:#D6DCE1;
+  --accent:#0E6A87; --accent-soft:#E2F0F4; --warn:#9A5B00; --warn-soft:#FBF0DC;
+  --sheet:#FFFFFF; --piece:#CFE6EE;
+  --f-display:"Noto Serif TC","Songti TC",serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11161B; --surface:#192028; --ink:#E5EAEE; --muted:#9AA6B2; --line:#2D3742;
+  --accent:#55B6D6; --accent-soft:#16323C; --warn:#E3A84A; --warn-soft:#33270F;
+  --sheet:#202934; --piece:#1E4757; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161B; --surface:#192028; --ink:#E5EAEE; --muted:#9AA6B2; --line:#2D3742;
+  --accent:#55B6D6; --accent-soft:#16323C; --warn:#E3A84A; --warn-soft:#33270F;
+  --sheet:#202934; --piece:#1E4757; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;padding-inline:16px;padding-block:28px 48px}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+header h1{font-family:var(--f-display);font-size:1.75rem;margin:0;text-wrap:balance;letter-spacing:.02em}
+header p{margin:4px 0 0;color:var(--muted);max-width:62ch}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:20px;align-items:start}
+@media (max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:18px;min-width:0}
+fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;min-width:0}
+legend{font-size:.78rem;letter-spacing:.08em;color:var(--muted);font-weight:700;margin-bottom:6px;padding:0}
+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+label{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted);min-width:0}
+input,select{font:inherit;font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 10px;width:100%;min-width:0}
+input[type=number]{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{flex:1;border:0;background:transparent;color:var(--muted);font:inherit;font-size:.9rem;padding:8px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--surface);font-weight:500}
+.hint{font-size:.8rem;color:var(--muted);margin:0}
+.result-main{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.big{font-family:var(--f-mono);font-size:2.6rem;font-weight:600;color:var(--accent);line-height:1.1;font-variant-numeric:tabular-nums}
+.big small{font-family:var(--f-body);font-size:1rem;color:var(--ink);font-weight:500;margin-left:4px}
+.sub{font-family:var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+dl{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 16px}
+dt{color:var(--muted);font-size:.88rem}
+dd{margin:0;text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.formula{background:var(--bg);border-radius:6px;padding:10px 12px;font-family:var(--f-mono);font-size:.85rem;overflow-x:auto;white-space:nowrap}
+.warn{background:var(--warn-soft);color:var(--warn);border-radius:6px;padding:8px 12px;font-size:.88rem}
+.preview{display:flex;flex-direction:column;gap:6px}
+.preview svg{width:100%;max-height:300px}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+.btn{font:inherit;font-size:.92rem;border-radius:6px;padding:8px 14px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--surface);font-weight:500}
+.btn.ghost{background:transparent;color:var(--accent)}
+.list h2{font-family:var(--f-display);font-size:1.15rem;margin:0}
+.tablebox{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:620px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left}
+th{font-size:.78rem;color:var(--muted);font-weight:700;letter-spacing:.04em}
+td.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+tfoot td{font-weight:700}
+.x{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:1rem}
+.empty{color:var(--muted);font-size:.9rem;margin:0}
+#copyOut{width:100%;min-height:90px;font-family:var(--f-mono);font-size:.85rem}
+</style>
+
+<div class="wrap">
+<header>
+  <h1>紙張令數試算</h1>
+  <p>輸入成品尺寸、原紙、頁數與印量，自動算出開數、需用全紙張數與令數（1 令 = 500 張全紙）。開數以印刷廠實際拼版為準，可在「拼版」欄自訂橫 × 直個數。</p>
+</header>
+
+<div class="grid">
+<form class="panel" id="form" autocomplete="off">
+  <fieldset>
+    <legend>品項</legend>
+    <label for="item">名稱（加入清單時使用）<input id="item" value="範例：內頁"></label>
+    <div class="seg" role="group" aria-label="計算方式">
+      <button type="button" id="mBook" aria-pressed="true">書籍（雙面，每張 = 2 頁）</button>
+      <button type="button" id="mSheet" aria-pressed="false">單張印件（每張 = 1 件）</button>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>成品尺寸（mm）</legend>
+    <label for="fPreset">常用規格
+      <select id="fPreset">
+        <option value="210x297">菊 8 開（A4）210 × 297</option>
+        <option value="148x210">菊 16 開（A5）148 × 210</option>
+        <option value="190x260">四六 16 開 190 × 260</option>
+        <option value="130x190">四六 32 開 130 × 190</option>
+        <option value="182x257">B5 182 × 257</option>
+        <option value="custom">自訂</option>
+      </select>
+    </label>
+    <div class="row3">
+      <label for="fw">寬<input id="fw" type="number" min="1" value="210"></label>
+      <label for="fh">高<input id="fh" type="number" min="1" value="297"></label>
+      <label for="bleed">出血（每邊）<input id="bleed" type="number" min="0" step="0.5" value="3"></label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>原紙（全開）</legend>
+    <label for="pPreset">紙張規格
+      <select id="pPreset">
+        <option value="635x889" data-in="25x35">菊全開 635 × 889 mm（25″ × 35″）</option>
+        <option value="787x1092" data-in="31x43">四六全開 787 × 1092 mm（31″ × 43″）</option>
+        <option value="custom">自訂</option>
+      </select>
+    </label>
+    <div class="seg" role="group" aria-label="原紙尺寸單位">
+      <button type="button" id="uMM" aria-pressed="true">公釐 mm</button>
+      <button type="button" id="uIN" aria-pressed="false">英吋 inch</button>
+    </div>
+    <div class="row3">
+      <label for="pw"><span id="pwLbl">寬（mm）</span><input id="pw" type="number" min="0.01" step="any" value="635"></label>
+      <label for="ph"><span id="phLbl">高（mm）</span><input id="ph" type="number" min="0.01" step="any" value="889"></label>
+      <label for="grip">咬口／留邊（mm）<input id="grip" type="number" min="0" value="0"></label>
+    </div>
+    <p class="hint" id="pConv"></p>
+    <div class="row">
+      <label for="gsm">基重 g/m²（選填）<input id="gsm" type="number" min="0" value="80"></label>
+      <label for="paperName">紙種（選填）<input id="paperName" value="道林紙"></label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>拼版（開數）</legend>
+    <div class="seg" role="group" aria-label="拼版方式">
+      <button type="button" id="layAuto" aria-pressed="true">自動拼版</button>
+      <button type="button" id="layMan" aria-pressed="false">自訂 橫 × 直</button>
+    </div>
+    <div class="row3">
+      <label for="lc">橫向個數（原紙寬）<input id="lc" type="number" min="1" value="2"></label>
+      <label for="lr">直向個數（原紙高）<input id="lr" type="number" min="1" value="4"></label>
+      <label for="lo">成品方向
+        <select id="lo"><option value="v">直放</option><option value="h">橫放</option></select>
+      </label>
+    </div>
+    <p class="hint" id="layHint">自動模式會填入最佳排法；直接修改個數或方向即切換為自訂，並依填寫數字繪製示意圖。</p>
+  </fieldset>
+
+  <fieldset>
+    <legend>印量與放損</legend>
+    <div class="row">
+      <label for="pages"><span id="pagesLbl">頁數</span><input id="pages" type="number" min="1" value="176"></label>
+      <label for="copies">冊數（印量）<input id="copies" type="number" min="1" value="3000"></label>
+    </div>
+    <div class="row">
+      <label for="loss">放數 %（按冊數）<input id="loss" type="number" min="0" step="0.5" value="3"></label>
+      <label for="extra">另加放（冊）<input id="extra" type="number" min="0" value="0"></label>
+    </div>
+    <p class="hint">放數以印量冊數計算：放數冊數 = 冊數 × 放數 % + 另加放冊數，再換算成用紙張數。比例與咬口請依合作印刷廠習慣填寫。</p>
+  </fieldset>
+</form>
+
+<section class="panel" aria-live="polite">
+  <div class="result-main">
+    <div class="big" id="rReam">—<small>令</small></div>
+    <div class="sub" id="rReamSplit"></div>
+  </div>
+  <div id="rWarn" class="warn" hidden></div>
+  <dl>
+    <dt>開數</dt><dd id="rUps"></dd>
+    <dt>每張全紙可印</dt><dd id="rPerSheet"></dd>
+    <dt>每冊用紙</dt><dd id="rPerCopy"></dd>
+    <dt>淨用紙（印量冊數）</dt><dd id="rNet"></dd>
+    <dt>放數</dt><dd id="rSpoil"></dd>
+    <dt>上機冊數（印量＋放數）</dt><dd id="rPrint"></dd>
+    <dt>合計用紙</dt><dd id="rTotal"></dd>
+    <dt>令重／總重</dt><dd id="rWeight"></dd>
+  </dl>
+  <div class="formula" id="rFormula"></div>
+  <div class="preview">
+    <span class="hint" id="rPrevCap">拼版示意</span>
+    <svg id="prev" role="img" aria-label="原紙拼版示意"></svg>
+  </div>
+  <div class="actions">
+    <button class="btn" type="button" id="addBtn">加入估算清單</button>
+  </div>
+</section>
+</div>
+
+<section class="panel list">
+  <h2>估算清單</h2>
+  <p class="hint">同一本書的內頁、封面可分別試算後加入；清單只存在這台電腦的瀏覽器。</p>
+  <div class="tablebox"><table>
+    <thead><tr><th>品項</th><th>紙張</th><th>成品</th><th>頁／冊</th><th>開數</th><th>合計張數</th><th>令數</th><th></th></tr></thead>
+    <tbody id="lBody"></tbody>
+    <tfoot id="lFoot"></tfoot>
+  </table></div>
+  <p class="empty" id="lEmpty">還沒有項目。上方試算完成後按「加入估算清單」。</p>
+  <div class="actions">
+    <button class="btn ghost" type="button" id="copyBtn">複製清單文字（貼給紙廠／印刷廠）</button>
+    <button class="btn ghost" type="button" id="clearBtn">清空清單</button>
+  </div>
+  <textarea id="copyOut" readonly hidden aria-label="清單文字"></textarea>
+</section>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const num = id => { const v = parseFloat($(id).value); return isFinite(v) ? v : 0; };
+const fmt = (n, d=0) => n.toLocaleString('zh-TW',{minimumFractionDigits:d,maximumFractionDigits:d});
+let mode = 'book', last = null, list = [];
+try { list = JSON.parse(localStorage.getItem('reamList') || '[]') || []; } catch(e) { list = []; }
+
+function setMode(m){
+  mode = m;
+  $('mBook').setAttribute('aria-pressed', m==='book');
+  $('mSheet').setAttribute('aria-pressed', m==='sheet');
+  $('pagesLbl').textContent = m==='book' ? '頁數' : '每份張數（單張印件填 1）';
+  if (m==='sheet' && num('pages') > 20) $('pages').value = 1;
+  calc();
+}
+$('mBook').onclick = () => setMode('book');
+$('mSheet').onclick = () => setMode('sheet');
+
+$('fPreset').onchange = e => { const v=e.target.value; if(v!=='custom'){const [w,h]=v.split('x'); $('fw').value=w; $('fh').value=h;} calc(); };
+const IN = 25.4;
+let unit = 'mm';
+const r1 = n => Math.round(n*10)/10, r2 = n => Math.round(n*100)/100;
+const paperMM = () => unit==='mm' ? [num('pw'), num('ph')] : [r1(num('pw')*IN), r1(num('ph')*IN)];
+function setUnit(u){
+  if (u===unit) return;
+  const [W,H] = paperMM();
+  unit = u;
+  const sel = $('pPreset').selectedOptions[0];
+  if (u==='in' && sel && sel.dataset.in){ const [a,b]=sel.dataset.in.split('x'); $('pw').value=a; $('ph').value=b; }
+  else if (u==='in'){ $('pw').value=r2(W/IN); $('ph').value=r2(H/IN); }
+  else if (sel && sel.value!=='custom'){ const [a,b]=sel.value.split('x'); $('pw').value=a; $('ph').value=b; }
+  else { $('pw').value=r1(W); $('ph').value=r1(H); }
+  $('uMM').setAttribute('aria-pressed', u==='mm');
+  $('uIN').setAttribute('aria-pressed', u==='in');
+  const s = u==='mm' ? '（mm）' : '（英吋）';
+  $('pwLbl').textContent='寬'+s; $('phLbl').textContent='高'+s;
+  calc();
+}
+$('uMM').onclick = () => setUnit('mm');
+$('uIN').onclick = () => setUnit('in');
+$('pPreset').onchange = e => { const o=e.target.selectedOptions[0]; if(o.value!=='custom'){const [w,h]=(unit==='in'?o.dataset.in:o.value).split('x'); $('pw').value=w; $('ph').value=h;} calc(); };
+['fw','fh'].forEach(id => $(id).addEventListener('input', () => { $('fPreset').value='custom'; }));
+['pw','ph'].forEach(id => $(id).addEventListener('input', () => { $('pPreset').value='custom'; }));
+let layMode = 'auto';
+function setLay(m){
+  layMode = m;
+  $('layAuto').setAttribute('aria-pressed', m==='auto');
+  $('layMan').setAttribute('aria-pressed', m==='man');
+  calc();
+}
+$('layAuto').onclick = () => setLay('auto');
+$('layMan').onclick = () => setLay('man');
+['lc','lr','lo'].forEach(id => { $(id).addEventListener('input', () => { if(layMode!=='man') setLay('man'); }); $(id).addEventListener('change', () => { if(layMode!=='man') setLay('man'); }); });
+$('form').addEventListener('input', calc);
+$('form').addEventListener('submit', e => e.preventDefault());
+
+function calc(){
+  const w=num('fw'), h=num('fh'), b=num('bleed'), g=num('grip');
+  const [W,H] = paperMM();
+  const inchTxt = `${r2(W/IN)}″ × ${r2(H/IN)}″`;
+  $('pConv').textContent = W&&H ? (unit==='mm' ? `= ${inchTxt}（英吋）` : `= ${W} × ${H} mm（以 1 英吋 = 25.4 mm 換算）`) : '';
+  const pages=num('pages'), copies=num('copies'), loss=num('loss'), extra=Math.round(num('extra')), gsm=num('gsm');
+  const pw=w+2*b, ph=h+2*b, uW=W, uH=H-g;
+  const even = mode==='book';
+  // 書籍對開頁拼版：橫排數或直排數至少一邊為偶數
+  const lay = (a,c) => {
+    if (!(a>0&&c>0)) return {c:0,r:0,n:0,raw:0};
+    let x=Math.floor(uW/a), y=Math.floor(uH/c); const raw=x*y;
+    if (even && x%2===1 && y%2===1){ if ((x-1)*y >= x*(y-1)) x-=1; else y-=1; }
+    return {c:x,r:y,n:x*y,raw};
+  };
+  const A=lay(pw,ph), B=lay(ph,pw);
+  const autoRot=B.n>A.n, best=autoRot?B:A, auto=best.n, rawMax=Math.max(A.raw,B.raw);
+  const warn=[];
+  let cols, rows, rotated, fits=true;
+  if (layMode==='auto'){
+    cols=best.c; rows=best.r; rotated=autoRot;
+    $('lc').value=cols; $('lr').value=rows; $('lo').value=rotated?'h':'v';
+    if (!auto){ show(null,[rawMax===1&&even ? '原紙只排得下 1 個成品，書籍對開頁拼版至少需要 2 開，請改用較大原紙或較小成品。' : '成品加出血後大於原紙，請確認尺寸或原紙規格。']); return; }
+    if (even && rawMax>auto) warn.push(`依尺寸最多可排 ${rawMax} 開，但兩邊皆為奇數，不符對開頁拼版；已調整為 ${auto} 開（${best.c} × ${best.r}，一邊為偶數）。`);
+  } else {
+    cols=Math.round(num('lc')); rows=Math.round(num('lr')); rotated=$('lo').value==='h';
+    if (cols<1||rows<1){ show(null,['請填寫拼版的橫向與直向個數（至少各 1）。']); return; }
+    const ew = rotated?ph:pw, eh = rotated?pw:ph;
+    const needW=cols*ew, needH=rows*eh;
+    fits = needW<=uW+0.01 && needH<=uH+0.01;
+    if (!fits){
+      const ow = needW-uW, oh = needH-uH;
+      const parts=[]; if(ow>0.01) parts.push(`寬超出 ${r1(ow)} mm`); if(oh>0.01) parts.push(`高超出 ${r1(oh)} mm`);
+      let tip='';
+      if (cols*eh<=uW+0.01 && rows*ew<=uH+0.01) tip='改為成品「'+(rotated?'直放':'橫放')+'」可放得下。';
+      else if (rows*ew<=uW+0.01 && cols*eh<=uH+0.01) tip=`改為 ${rows} × ${cols} 並將成品「${rotated?'直放':'橫放'}」可放得下。`;
+      else tip=`依尺寸自動拼版最多 ${auto} 開（${best.c} × ${best.r}）。`;
+      warn.push(`⚠ ${cols} × ${rows} 放不下：需 ${r1(needW)} × ${r1(needH)} mm，原紙可用 ${r1(uW)} × ${r1(uH)} mm（${parts.join('、')}）。${tip}`);
+    }
+    if (even && cols%2===1 && rows%2===1) warn.push(`${cols} × ${rows} 兩邊皆為奇數，不符書籍對開頁拼版（一邊須為偶數）。`);
+  }
+  const ups = cols*rows;
+  if (mode==='book' && pages%4!==0) warn.push(`書籍頁數通常是 4 的倍數，目前 ${pages} 頁，請確認是否含空白頁。`);
+  const perPiece = mode==='book'?2:1, perSheet=ups*perPiece;
+  const perCopy = pages/perSheet;
+  const spoilCopies = Math.ceil(copies*loss/100)+extra;
+  const printCopies = copies+spoilCopies;
+  const net = Math.ceil(perCopy*copies);
+  const total = Math.ceil(perCopy*printCopies);
+  const spoil = total-net;
+  const ream = total/500;
+  const reamKg = gsm ? gsm*(W*H/1e6)*500/1000 : 0;
+  last = {name:$('item').value.trim()||'未命名', paper:`${$('paperName').value.trim()}${gsm?` ${gsm}g`:''}`.trim(), sheetSize:`${W}×${H}mm（${r2(W/IN)}″×${r2(H/IN)}″）`, size:`${w}×${h}`, pages, copies, spoilCopies, printCopies, ups, total, ream, mode};
+  show({cols,rows,fits,man:layMode==='man',even,w,h,b,W,H,g,pw,ph,ups,auto,rotated,perSheet,perCopy,net,spoil,spoilCopies,printCopies,total,ream,reamKg,pages,copies,loss,extra,perPiece},warn);
+}
+
+function show(r,warn){
+  $('rWarn').hidden = !warn.length; $('rWarn').innerHTML = warn.join('<br>');
+  if(!r){ $('rReam').innerHTML='—<small>令</small>'; ['rReamSplit','rUps','rPerSheet','rPerCopy','rNet','rSpoil','rPrint','rTotal','rWeight','rFormula'].forEach(i=>$(i).textContent=''); $('prev').innerHTML=''; last=null; return; }
+  $('rReam').innerHTML = `${fmt(r.ream,2)}<small>令${r.fits?'':'（拼版放不下，僅供參考）'}</small>`;
+  $('rReam').style.color = r.fits ? '' : 'var(--warn)';
+  $('rReamSplit').textContent = `= ${Math.floor(r.total/500)} 令 ${r.total%500} 張`;
+  $('rUps').textContent = r.man ? `${r.ups} 開（自訂 ${r.cols} × ${r.rows}${r.fits?'':'，放不下'}）` : `${r.ups} 開（${r.cols} × ${r.rows}）`;
+  $('rPerSheet').textContent = r.perPiece===2 ? `${r.perSheet} 頁（雙面）` : `${r.perSheet} 件`;
+  $('rPerCopy').textContent = `${fmt(r.perCopy,3)} 張`;
+  $('rNet').textContent = `${fmt(r.net)} 張`;
+  $('rSpoil').textContent = `${fmt(r.spoilCopies)} 冊（${r.loss}%${r.extra?` + ${r.extra} 冊`:''}）≈ ${fmt(r.spoil)} 張`;
+  $('rPrint').textContent = `${fmt(r.printCopies)} 冊`;
+  $('rTotal').textContent = `${fmt(r.total)} 張`;
+  $('rWeight').textContent = r.reamKg ? `${fmt(r.reamKg,1)} kg／令 · 約 ${fmt(r.reamKg*r.ream,0)} kg` : '填基重後顯示';
+  $('rFormula').textContent = `${r.pages} ${r.perPiece===2?'頁':'張'} ÷ (${r.ups} 開 × ${r.perPiece}) × (${fmt(r.copies)} + 放數 ${fmt(r.spoilCopies)}) 冊 = ${fmt(r.total)} 張 ÷ 500 = ${fmt(r.ream,2)} 令`;
+  drawPreview(r);
+}
+
+function drawPreview(r){
+  const svg=$('prev'), W=r.W, H=r.H;
+  const pw = r.rotated? r.ph : r.pw, ph = r.rotated? r.pw : r.ph;
+  const cols=r.cols, rows=r.rows, tw=cols*pw, th=rows*ph, uH=H-r.g;
+  const pad=Math.max(W,H)*0.04;
+  const ox=pad+(tw<=W ? (W-tw)/2 : 0), oy=pad+r.g+(th<=uH ? (uH-th)/2 : 0);
+  const vbW=Math.max(W, ox-pad+tw)+pad*2, vbH=Math.max(H, oy-pad+th)+pad*2;
+  svg.setAttribute('viewBox',`0 0 ${vbW} ${vbH}`);
+  const sw=Math.max(W,H)/300;
+  let s=`<rect x="${pad}" y="${pad}" width="${W}" height="${H}" fill="var(--sheet)" stroke="var(--muted)" stroke-width="${sw*1.2}"/>`;
+  if(r.g>0) s+=`<rect x="${pad}" y="${pad}" width="${W}" height="${r.g}" fill="var(--warn-soft)"/>`;
+  for(let i=0;i<cols;i++)for(let j=0;j<rows;j++){
+    const x=ox+i*pw, y=oy+j*ph, bx=r.b;
+    const out = x+pw > pad+W+0.01 || y+ph > pad+H+0.01;
+    const c = out ? 'var(--warn)' : 'var(--accent)', f = out ? 'var(--warn-soft)' : 'var(--piece)';
+    s+=`<rect x="${x}" y="${y}" width="${pw}" height="${ph}" fill="${f}" fill-opacity="${out?0.85:1}" stroke="${c}" stroke-width="${sw}"/>`;
+    s+=`<rect x="${x+bx}" y="${y+bx}" width="${pw-2*bx}" height="${ph-2*bx}" fill="none" stroke="${c}" stroke-width="${sw*0.6}" stroke-dasharray="${sw*4} ${sw*2.5}"/>`;
+  }
+  // 原紙邊界重描於上層，超出部分一目了然
+  s+=`<rect x="${pad}" y="${pad}" width="${W}" height="${H}" fill="none" stroke="var(--ink)" stroke-width="${sw*1.4}"/>`;
+  const fs=Math.min(W,H)/11;
+  s+=`<text x="${pad+W/2}" y="${pad+H/2+fs/3}" text-anchor="middle" font-size="${fs}" font-family="IBM Plex Mono, monospace" font-weight="600" fill="${r.fits?'var(--ink)':'var(--warn)'}">${r.fits?`${cols*rows} 開`:'放不下'}</text>`;
+  svg.innerHTML=s;
+  $('rPrevCap').textContent = `拼版示意：${r1(r.W)}×${r1(r.H)} mm 原紙，成品${r.rotated?'橫放':'直放'}，橫 ${cols} × 直 ${rows}${r.man?'（自訂）':'（自動）'}；虛線為裁切線${r.fits?'':'；橘色為超出原紙的部分'}`;
+}
+
+function saveList(){ try{ localStorage.setItem('reamList', JSON.stringify(list)); }catch(e){} }
+function renderList(){
+  $('lEmpty').hidden = list.length>0;
+  $('lBody').innerHTML = list.map((it,i)=>`<tr><td>${esc(it.name)}</td><td>${esc(it.paper||'—')}<br><span class="hint">${it.sheetSize}</span></td><td>${it.size}</td><td class="n">${it.pages}${it.mode==='book'?' 頁':' 張'} × ${fmt(it.copies)}${it.spoilCopies?`<br><span class="hint">＋放數 ${fmt(it.spoilCopies)} 冊</span>`:''}</td><td class="n">${it.ups}</td><td class="n">${fmt(it.total)}</td><td class="n">${fmt(it.ream,2)}</td><td><button class="x" type="button" data-i="${i}" aria-label="刪除 ${esc(it.name)}">✕</button></td></tr>`).join('');
+  const groups={};
+  list.forEach(it=>{const k=`${it.paper||'未填紙種'}（${it.sheetSize}）`; groups[k]=(groups[k]||0)+it.total;});
+  $('lFoot').innerHTML = list.length ? Object.entries(groups).map(([k,t])=>`<tr><td colspan="5">合計 · ${esc(k)}</td><td class="n">${fmt(t)}</td><td class="n">${fmt(t/500,2)}</td><td></td></tr>`).join('') : '';
+  document.querySelectorAll('.x').forEach(b=>b.onclick=()=>{list.splice(+b.dataset.i,1);saveList();renderList();});
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function listText(){
+  const lines=list.map(it=>`${it.name}｜${it.paper||'未填紙種'} ${it.sheetSize}｜成品 ${it.size}｜${it.pages}${it.mode==='book'?'頁':'張'}×${it.copies}冊${it.spoilCopies?`（另放 ${it.spoilCopies} 冊）`:''}｜${it.ups}開｜${it.total}張 = ${Math.floor(it.total/500)}令${it.total%500}張`);
+  const groups={}; list.forEach(it=>{const k=`${it.paper||'未填紙種'} ${it.sheetSize}`; groups[k]=(groups[k]||0)+it.total;});
+  return lines.concat(['—— 合計 ——'], Object.entries(groups).map(([k,t])=>`${k}：${t}張 = ${Math.floor(t/500)}令${t%500}張`)).join('\n');
+}
+$('addBtn').onclick=()=>{ if(!last) return; list.push(last); saveList(); renderList(); $('addBtn').textContent='已加入'; setTimeout(()=>$('addBtn').textContent='加入估算清單',1200); };
+$('clearBtn').onclick=()=>{ if($('clearBtn').dataset.c){ list=[]; saveList(); renderList(); delete $('clearBtn').dataset.c; $('clearBtn').textContent='清空清單'; } else { $('clearBtn').dataset.c='1'; $('clearBtn').textContent='再按一次確認清空'; setTimeout(()=>{delete $('clearBtn').dataset.c; $('clearBtn').textContent='清空清單';},3000);} };
+$('copyBtn').onclick=()=>{
+  if(!list.length) return;
+  const t=listText(), out=$('copyOut'); out.value=t;
+  const fallback=()=>{ out.hidden=false; out.focus(); out.select(); $('copyBtn').textContent='請手動複製下方文字'; };
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(()=>{ $('copyBtn').textContent='已複製'; setTimeout(()=>$('copyBtn').textContent='複製清單文字（貼給紙廠／印刷廠）',1500); }).catch(fallback); } else fallback();
+};
+calc(); renderList();
+</script>
+
+</body></html>
